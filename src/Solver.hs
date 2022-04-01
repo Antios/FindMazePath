@@ -3,16 +3,27 @@ module Solver (run) where
 import qualified Data.ByteString.Lazy as B
 import Data.Char (intToDigit, toUpper)
 import System.Environment ()
-import Numeric
-import Data.Word
-import Data.Bits
-import System.IO
+import Numeric (readHex)
+import Data.Array (Array, Array, array)
+import Data.Word ( Word8 )
+import Data.Bits ()
+import System.IO ()
 
+--TODO: SCP files over to timberlea
+
+data Cell = Cell
+    {   wallOnRight  :: Bool,
+        wallOnBottom :: Bool,
+        wallOnLeft   :: Bool,
+        wallOnTop    :: Bool
+    }
+
+type Maze = Array (Int, Int) Cell
 
 run :: FilePath -> IO()
 run fileName = do
     bytes <- B.unpack <$> B.readFile fileName
-    print (getHeight bytes)
+    print (getCells bytes)
 
 padHex :: String -> String
 padHex word =
@@ -45,3 +56,8 @@ getHeight list = fst (head (readHex $ concatH list))
 getWidth :: [Word8] -> Int
 getWidth list = fst (head (readHex $ concatW list))
 
+getCells :: [Word8] -> [Word8 ]
+getCells = drop 8
+
+--makeMaze :: [Word8] -> Maze
+--makeMaze bytes = array ((0,0), (getHeight bytes, getWidth bytes) []
