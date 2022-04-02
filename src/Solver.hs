@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Solver (run) where
 
 import qualified Data.ByteString.Lazy as B
@@ -8,56 +9,67 @@ import Data.Array (Array, Array, array)
 import Data.Word ( Word8 )
 import Data.Bits ()
 import System.IO ()
+import System.Exit (exitFailure)
 
 --TODO: SCP files over to timberlea
 
 data Cell = Cell
-    {   wallOnRight  :: Bool,
-        wallOnBottom :: Bool,
-        wallOnLeft   :: Bool,
-        wallOnTop    :: Bool
+    {
+        wallOnRight  :: Bool,
+        wallOnBottom :: Bool
     }
-
-type Maze = Array (Int, Int) Cell
+data Maze = Maze
+    {
+        height, width :: Int,
+        cells         :: Array (Int, Int) Cell
+    }
 
 run :: FilePath -> IO()
 run fileName = do
-    bytes <- B.unpack <$> B.readFile fileName
-    print (getCells bytes)
+    txt <- B.readFile fileName
+    let bytes = B.unpack txt
+    case extractNum bytes of
+        Nothing -> do
+            putStrLn "File too small"
+            exitFailure
+        Just (height, bytes') -> do
+            case extractNum bytes' of
+                Nothing -> do
+                    putStrLn "File too small"
+                    exitFailure
+                Just (width, bytes'') -> print $ makeWallList height width bytes''
 
-padHex :: String -> String
-padHex word =
-    if length word < 2
-        then "0" ++ word
-    else
-        word
 
-toHex :: Int -> String
-toHex = map toUpper . reverse . recurse
-  where recurse n
-          | n < 16    = [intToDigit n]
-          | otherwise = let (q,r) = n `divMod` 16
-                        in intToDigit r : recurse q
+extractNum :: [Word8] -> Maybe (Int, [Word8])
+extractNum (a:b:c:d:rest) = Just (num, rest)
+    where
+        num = 0x1000000 * fromIntegral d + 0x10000 * fromIntegral c + 0x100 * fromIntegral b + fromIntegral a
+extractNum _ = Nothing
 
-toHexList :: [Word8] -> [String]
-toHexList = map (padHex . toHex . fromIntegral . toInteger)
+makeWallList :: Int -> Int -> [Word8] -> [Cell]
+makeWallList h w bytes = do
+    let twoDBitList = map (toBits8 . toInteger) bytes
+    let bitListLong = concat twoDBitList
+    let bitList = take (w*h*2) bitListLong
+    makeCells bitList
 
-concatH :: [Word8] -> String
-concatH list = (toHexList list!!3)++(toHexList list!!2)++
-               (toHexList list!!1)++head (toHexList list)
+toBitsBySize :: Int -> Integer -> [Bool]
+toBitsBySize  0 x = []
+toBitsBySize sz 0 = [False | i <- [1..sz]]
+toBitsBySize sz x =  if k == 0
+    then False : toBitsBySize n x
+    else True  : toBitsBySize n (x - k*m)
+    where n = sz - 1
+          m = 2^n
+          k = x `div` m
 
-concatW :: [Word8] -> String
-concatW list = (toHexList list!!7)++(toHexList list!!6)++
-               (toHexList list!!5)++(toHexList list!!4)
+toBits8 :: Integer -> [Bool]
+toBits8 = toBitsBySize 8
 
-getHeight :: [Word8] -> Int
-getHeight list = fst (head (readHex $ concatH list))
-
-getWidth :: [Word8] -> Int
-getWidth list = fst (head (readHex $ concatW list))
-
-getCells :: [Word8] -> [Word8 ]
-getCells = drop 8
+makeCells :: [Bool] -> [Cell]
+makeCells [] = []
+makeCells (k:v:t) = Cell { wallOnRight = k, wallOnBottom = v} : makeCells t
+    
 
 --makeMaze :: [Word8] -> Maze
 --makeMaze bytes = array ((0,0), (getHeight bytes, getWidth bytes) []
