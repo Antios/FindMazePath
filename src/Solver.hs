@@ -1,11 +1,12 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE BlockArguments #-}
 module Solver (run) where
 
 import qualified Data.ByteString.Lazy as B
 import Data.Char (intToDigit, toUpper)
 import System.Environment ()
 import Numeric (readHex)
-import Data.Array (Array, Array, array)
+import Data.Array (Array, Array, array, listArray, (!))
 import Data.Word ( Word8 )
 import Data.Bits ()
 import System.IO ()
@@ -24,8 +25,8 @@ data Maze = Maze
         cells         :: Array (Int, Int) Cell
     }
 
-run :: FilePath -> IO()
-run fileName = do
+run :: FilePath -> FilePath -> IO()
+run fileName pathFileName = do
     txt <- B.readFile fileName
     let bytes = B.unpack txt
     case extractNum bytes of
@@ -37,7 +38,7 @@ run fileName = do
                 Nothing -> do
                     putStrLn "File too small"
                     exitFailure
-                Just (width, bytes'') -> print $ makeWallList height width bytes''
+                Just (width, bytes'') -> print $ makeMaze height width bytes''
 
 
 extractNum :: [Word8] -> Maybe (Int, [Word8])
@@ -46,12 +47,85 @@ extractNum (a:b:c:d:rest) = Just (num, rest)
         num = 0x1000000 * fromIntegral d + 0x10000 * fromIntegral c + 0x100 * fromIntegral b + fromIntegral a
 extractNum _ = Nothing
 
-makeWallList :: Int -> Int -> [Word8] -> [Cell]
-makeWallList h w bytes = do
+findRPath :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+findRPath maze curr forbidden = case () of
+    () | curr == (height maze, width maze) -> [(height maze, width maze)]
+       | otherwise -> possibleMoves maze curr forbidden
+
+possibleMoves :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+possibleMoves m c f = canMoveDown m c f ++ canMoveRight m c f ++ canMoveUp m c f ++ canMoveLeft m c f
+
+canMoveDown :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+canMoveDown maze curr forbidden =
+    let arr = [] in
+    if not $ isBotWallCell maze (fst curr + 1, snd curr) && not (getWallOnBottom (fst curr + 1) (snd curr) maze) && curr /= forbidden then
+        arr
+    else
+        arr ++ [(fst curr + 1, snd curr)]
+
+canMoveRight :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+canMoveRight maze curr forbidden =
+    let arr = [] in
+    if not $ isRightWallCell maze (fst curr, snd curr + 1) && not (getWallOnRight (fst curr) (snd curr + 1) maze) && curr /= forbidden then
+        arr
+    else
+        arr ++ [(fst curr, snd curr + 1)]
+
+canMoveUp :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+canMoveUp maze curr forbidden =
+    let arr = [] in
+    if not $ isTopWallCell maze (fst curr - 1, snd curr) && not (getWallOnTop (fst curr - 1) (snd curr) maze) && curr /= forbidden then
+        arr
+    else
+        arr ++ [(fst curr - 1, snd curr)]
+
+canMoveLeft :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+canMoveLeft maze curr forbidden =
+    let arr = [] in
+    if not $ isLeftWallCell maze (fst curr, snd curr - 1) && not (getWallOnLeft (fst curr) (snd curr - 1) maze) && curr /= forbidden then
+        arr
+    else
+        arr ++ [(fst curr, snd curr - 1)]
+
+
+isBotWallCell :: Maze -> (Int, Int) -> Bool
+isBotWallCell maze (y, _) = (height maze == y) && True
+
+isTopWallCell :: Maze -> (Int, Int) -> Bool
+isTopWallCell maze (y, _) = (0 == y) && True
+
+isLeftWallCell :: Maze -> (Int, Int) -> Bool
+isLeftWallCell maze (_, x) = (0 == x) && True
+
+isRightWallCell :: Maze -> (Int, Int) -> Bool
+isRightWallCell maze (_, x) = (height maze == x) && True
+
+getCell :: Int -> Int -> Maze -> Cell
+getCell a b maze = cells maze!(a,b)
+
+getWallOnBottom :: Int -> Int -> Maze -> Bool
+getWallOnBottom a b maze = wallOnBottom $ getCell a b maze
+
+getWallOnRight :: Int -> Int -> Maze -> Bool
+getWallOnRight a b maze = wallOnRight $ getCell a b maze
+
+getWallOnTop :: Int -> Int -> Maze -> Bool
+getWallOnTop a b maze = wallOnBottom $ getCell (a-1) b maze
+
+getWallOnLeft :: Int -> Int -> Maze -> Bool
+getWallOnLeft a b maze = wallOnRight $ getCell a (b-1) maze
+
+makeMaze :: Int -> Int -> [Word8] -> Maze
+makeMaze h w bytes = do
     let twoDBitList = map (toBits8 . toInteger) bytes
     let bitListLong = concat twoDBitList
     let bitList = take (w*h*2) bitListLong
-    makeCells bitList
+    let c = makeCells bitList
+    Maze {height = h, width = w, cells = listArray ((0,0),(h,w)) c}
+
+makeCells :: [Bool] -> [Cell]
+makeCells [] = []
+makeCells (k:v:t) = Cell { wallOnRight = k, wallOnBottom = v} : makeCells t
 
 toBitsBySize :: Int -> Integer -> [Bool]
 toBitsBySize  0 x = []
@@ -65,11 +139,3 @@ toBitsBySize sz x =  if k == 0
 
 toBits8 :: Integer -> [Bool]
 toBits8 = toBitsBySize 8
-
-makeCells :: [Bool] -> [Cell]
-makeCells [] = []
-makeCells (k:v:t) = Cell { wallOnRight = k, wallOnBottom = v} : makeCells t
-    
-
---makeMaze :: [Word8] -> Maze
---makeMaze bytes = array ((0,0), (getHeight bytes, getWidth bytes) []
