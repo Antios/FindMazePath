@@ -1,10 +1,4 @@
-﻿| | | | |
-|-|-|-|-|
-|ListenReadSpeaker webReader: ListenOpen/close toolbarFocus| | | |
-| | | | |
-|Haskell Project| | | |
-| | | | |
-|Description| | | |
+﻿|Description| | | |
 | | | | |
 |This program reads a maze and finds a path through the maze. Specifically, the maze has <span style="display: inline-block; position: relative; width: 1.393em; height: 0px; font-size: 138%;"><span style="position: absolute; clip: rect(3.461em, 1001.36em, 5.316em, -999.998em); top: -3.993em; left: 0em;"><span class="mrow" id="MathJax-Span-2"><span style="display: inline-block; position: relative; width: 1.393em; height: 0px;"><span style="position: absolute; clip: rect(3.461em, 1000.72em, 4.104em, -999.998em); top: -3.993em; left: 0em;"><span class="mi" id="MathJax-Span-3" style="font-family: STIXGeneral-Italic;">m×nm×n cells. It starts in the top-left cell and find a path to the bottom-right cell:| | | |
 | | | | |
@@ -33,4 +27,3 @@
 |The byte 1C is 00011100 in binary. Thus, the cell (0,4) has no walls to its right or below it. (Remember, the outside walls are not stored explicitly.) The cell (1,0) has walls to its right and below it. The cell (1,1) is represented by the bit pair 01, so it has a wall to its right but none below it. The cell (1,2) has no walls to its right or below it.| | | |
 |The byte 4B is 01001011 in binary. Thus, the cell (1,3) has walls to its right and below it. The cell (1,4) is represented by the bit pair 10, so it has a wall below it but not to its right. (Actually, it does, but that’s an outside wall, which is not stored.) The cell (2,0) has no walls to its right or below it. The cell (2,1) is represented by the bit pair 01 and thus has a wall to its right but not below it.| | | |
 |The remaining bytes are to be interpreted in the same fashion.| | | |
-|Output Format| | | |
