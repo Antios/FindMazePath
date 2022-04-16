@@ -11,5 +11,5 @@ main = do
     args <- getArgs
     case args of
         [fileName, pathFileName] -> run fileName pathFileName
-        _          -> putStrLn "USAGE: maze <file name>"
+        _          -> putStrLn "USAGE: maze <file name> <file name>"
 

@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-{-# LANGUAGE BlockArguments #-}
 module Solver (run) where
 
 import qualified Data.ByteString.Lazy as B
@@ -38,7 +36,7 @@ run fileName pathFileName = do
                 Nothing -> do
                     putStrLn "File too small"
                     exitFailure
-                Just (width, bytes'') -> print $ makeMaze height width bytes''
+                Just (width, bytes'') -> display pathFileName (findRPath (makeMaze height width bytes'') (0,0) (0,0))
 
 
 extractNum :: [Word8] -> Maybe (Int, [Word8])
@@ -47,10 +45,21 @@ extractNum (a:b:c:d:rest) = Just (num, rest)
         num = 0x1000000 * fromIntegral d + 0x10000 * fromIntegral c + 0x100 * fromIntegral b + fromIntegral a
 extractNum _ = Nothing
 
+display :: FilePath -> [(Int, Int)] -> IO ()
+display path l = writeFile path (showStrings l)
+
+showStrings :: [(Int, Int)] -> String
+showStrings = concatMap format
+  where
+    format (a, b) = show a ++ " " ++ show b ++ "\n"
+
+--findPath :: Maze -> (Int, Int) -> [(Int, Int)]
+--findPath maze curr = 
+
 findRPath :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
 findRPath maze curr forbidden = case () of
     () | curr == (height maze, width maze) -> [(height maze, width maze)]
-       | otherwise -> possibleMoves maze curr forbidden
+       | otherwise -> findRPath maze (head (possibleMoves maze curr forbidden)) curr
 
 possibleMoves :: Maze -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
 possibleMoves m c f = canMoveDown m c f ++ canMoveRight m c f ++ canMoveUp m c f ++ canMoveLeft m c f
