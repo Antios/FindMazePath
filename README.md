@@ -1,4 +1,7 @@
-﻿|Description| | | |
+﻿| | | | |
+|-|-|-|-|
+| | | | |
+|Description| | | |
 | | | | |
 |This program reads a maze and finds a path through the maze. Specifically, the maze has <span style="display: inline-block; position: relative; width: 1.393em; height: 0px; font-size: 138%;"><span style="position: absolute; clip: rect(3.461em, 1001.36em, 5.316em, -999.998em); top: -3.993em; left: 0em;"><span class="mrow" id="MathJax-Span-2"><span style="display: inline-block; position: relative; width: 1.393em; height: 0px;"><span style="position: absolute; clip: rect(3.461em, 1000.72em, 4.104em, -999.998em); top: -3.993em; left: 0em;"><span class="mi" id="MathJax-Span-3" style="font-family: STIXGeneral-Italic;">m×nm×n cells. It starts in the top-left cell and find a path to the bottom-right cell:| | | |
 | | | | |
