@@ -10,6 +10,6 @@ main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [fileName] -> run fileName
-        _          -> putStrLn "USAGE: xxd <file name>"
+        [fileName, pathFileName] -> run fileName pathFileName
+        _          -> putStrLn "USAGE: maze <file name> <file name>"
 
